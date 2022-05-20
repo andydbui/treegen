@@ -10,20 +10,16 @@ seed(1)
 
 for object in bpy.data.objects:
     print(object.name)
-    
-"""print("Moving tree")
-tree = bpy.data.objects["treeArm"]
-bpy.data.objects['treeArm'].location = (20, 0, 0)"""
 
-# Generating 9 trees
-for i in range(0, 1):
+num_trees = 1
+# Generating n trees
+for i in range(0, num_trees):
     seed = randint(0, 1000)
     split_height = random.uniform(0.2, 0.4)
     wind = random.uniform(0.3, 0.5)
     leaf_size = random.uniform(0.22, 0.28)
     frame_rate = random.uniform(0.65, 0.80)
-    print("SEED:")
-    print(seed)
+    print(str.format("SEED: {0}", seed))
     bpy.ops.curve.tree_add(do_update=True, 
                            chooseSet='7', 
                            bevel=True, 
@@ -117,48 +113,38 @@ for i in range(0, 1):
     bpy.context.active_object.name = treeName
     # each tree is moved 20 units to the left to the l
     # this operator will 'work' or 'operate' on the active object we just set
-    print("Applying modifier")
-    
-    # Apply skin modifier                                
+    print("Applying modifiers")
+    # Apply modifiers and uv unwrap                        
     for obj in bpy.context.scene.objects: 
         print(obj.name, obj, obj.type)
         if obj.name == 'treemesh':
-            for m in obj.modifiers:
-                print(m.name)
-                if m.name == 'Skin':
-                    print("applying?")
-                    bpy.ops.object.modifier_apply({"object": obj},
-                                                  modifier='Skin')
-                    # Now,select tree mesh and uv unwrap?
-                    
-        if obj.type == 'MESH': 
-            print("&gt;&gt;&gt;&gt;", obj.name)
-"""
-    x_translation = 15 * i
-    print("Moving tree")
-    bpy.data.objects[treeName].location = (x_translation, 0, 0)
-"""
-"""
-    # UV unwrap
-    context = bpy.context
-    scene = context.scene
-    vl = context.view_layer
-    # deselect all to make sure select one at a time
-    bpy.ops.object.select_all(action='DESELECT')
-    
-    for obj in scene.objects:
-        if (obj.type == 'MESH'):
-            vl.objects.active = obj
+            print("Applying Skin modifier")
+            # skin modifier
+            bpy.ops.object.modifier_apply({"object": obj},
+                                          modifier='Skin')
+            
+            print("Applying Decimate modifier")
+            # decimate modifier
+            m = obj.modifiers.new("Decimate", type='DECIMATE')
+            m.decimate_type = 'DISSOLVE'
+            
+            bpy.ops.object.modifier_apply({"object": obj},
+                                          modifier=m.name)
+            # Now,select tree mesh and uv unwrap
+            print("UV unwrapping")
+            bpy.ops.object.select_all(action='DESELECT')
+            bpy.context.view_layer.objects.active = obj
             obj.select_set(True)
-            print(obj.name)
-            lm =  obj.data.uv_layers.get("LightMap")
-            if not lm:
-                lm = obj.data.uv_layers.new(name="LightMap")
+            bpy.ops.object.mode_set(mode='EDIT', toggle=True)
+            
+            lm = obj.data.uv_layers.new(name="LightMap")
             lm.active = True
-            bpy.ops.object.editmode_toggle()
-            bpy.ops.mesh.select_all(action='SELECT') # for all faces
-            bpy.ops.uv.smart_project(angle_limit=66, island_margin = 0.02)
-            bpy.ops.object.editmode_toggle()
-            obj.select_set(False)
-"""
-
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.uv.smart_project(angle_limit=30, island_margin=0.00, area_weight=0.00, correct_aspect=True)
+            bpy.ops.object.mode_set(mode='OBJECT', toggle=True)
+            x_translation = 15 * i
+            print("Moving tree")
+            bpy.data.objects[treeName].location = (x_translation, 0, 0)
+                    
+            # change name 
+            obj.name = "treeMesh" + str(i)
